@@ -34,12 +34,12 @@ class MessageGeneratorUI {
     createHTML() {
         this.container.innerHTML = `
             <div class="msg-generator">
-                <div class="msg-gen-header">
+                <div class="msg-gen-header" role="banner">
                     <h2>AI Message Generator</h2>
                     <p>Generate personalized messages for any occasion with intelligent templates</p>
-                    <div class="msg-gen-stats">
+                    <div class="msg-gen-stats" role="region" aria-label="Statistics">
                         <div class="stat">
-                            <strong id="total-generated">0</strong>
+                            <strong id="total-generated" aria-live="polite">0</strong>
                             <span>Generated</span>
                         </div>
                         <div class="stat">
@@ -51,13 +51,18 @@ class MessageGeneratorUI {
                             <span>Templates</span>
                         </div>
                     </div>
-                    <button id="nightModeToggle" class="btn btn-outline" style="position:absolute;top:18px;right:18px;z-index:2;">
+                    <button 
+                        id="nightModeToggle" 
+                        class="btn btn-outline" 
+                        style="position:absolute;top:18px;right:18px;z-index:2;"
+                        aria-label="Toggle night mode"
+                    >
                         🌙 Night Mode
                     </button>
                 </div>
 
                 <!-- Input Section -->
-                <div class="msg-gen-input-section">
+                <div class="msg-gen-input-section" role="main">
                     <div class="input-group">
                         <label for="user-prompt">Describe the message you want to generate:</label>
                         <div class="input-wrapper">
@@ -66,43 +71,44 @@ class MessageGeneratorUI {
                                 placeholder="e.g., I want to send Diwali wishes to my customers"
                                 rows="3"
                                 maxlength="500"
-                                aria-label="Message description"
+                                aria-label="Message description input"
+                                aria-describedby="char-counter-label"
                             ></textarea>
-                            <div class="char-counter">
+                            <div class="char-counter" id="char-counter-label" aria-live="polite">
                                 <span id="char-count">0</span> / 500 characters
                             </div>
                         </div>
                     </div>
                     
-                    <div class="input-actions">
-                        <button id="generate-btn" class="btn btn-primary">
+                    <div class="input-actions" role="group" aria-label="Message generation controls">
+                        <button id="generate-btn" class="btn btn-primary" aria-label="Generate message from description">
                             🚀 Generate Message
                         </button>
-                        <button id="clear-btn" class="btn btn-secondary">
+                        <button id="clear-btn" class="btn btn-secondary" aria-label="Clear input field">
                             🗑️ Clear
                         </button>
-                        <button id="settings-btn" class="btn btn-outline">
+                        <button id="settings-btn" class="btn btn-outline" aria-label="Open settings panel">
                             ⚙️ Settings
                         </button>
                     </div>
 
-                    <div class="quick-prompts">
+                    <div class="quick-prompts" role="complementary" aria-label="Quick example prompts">
                         <p>Quick examples:</p>
-                        <div class="prompt-tags">
-                            <span class="prompt-tag" data-prompt="I want to send Diwali wishes to my customers">Diwali Greetings</span>
-                            <span class="prompt-tag" data-prompt="Christmas message for clients">Christmas Wishes</span>
-                            <span class="prompt-tag" data-prompt="New Year message for team">New Year Message</span>
-                            <span class="prompt-tag" data-prompt="Birthday wishes for employee">Birthday Wishes</span>
-                            <span class="prompt-tag" data-prompt="Thank you message for customers">Thank You Note</span>
-                            <span class="prompt-tag" data-prompt="Congratulations message for achievement">Congratulations</span>
+                        <div class="prompt-tags" role="list">
+                            <button class="prompt-tag" role="listitem" data-prompt="I want to send Diwali wishes to my customers" aria-label="Use Diwali greetings template">Diwali Greetings</button>
+                            <button class="prompt-tag" role="listitem" data-prompt="Christmas message for clients" aria-label="Use Christmas wishes template">Christmas Wishes</button>
+                            <button class="prompt-tag" role="listitem" data-prompt="New Year message for team" aria-label="Use New Year message template">New Year Message</button>
+                            <button class="prompt-tag" role="listitem" data-prompt="Birthday wishes for employee" aria-label="Use birthday wishes template">Birthday Wishes</button>
+                            <button class="prompt-tag" role="listitem" data-prompt="Thank you message for customers" aria-label="Use thank you note template">Thank You Note</button>
+                            <button class="prompt-tag" role="listitem" data-prompt="Congratulations message for achievement" aria-label="Use congratulations template">Congratulations</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Result Section -->
-                <div id="result-section" class="msg-gen-result-section" style="display: none;">
-                    <div id="loading-spinner" class="loading-spinner" style="display: none;">
-                        <div class="spinner"></div>
+                <div id="result-section" class="msg-gen-result-section" role="region" aria-label="Generation results" style="display: none;">
+                    <div id="loading-spinner" class="loading-spinner" role="status" aria-live="polite" style="display: none;">
+                        <div class="spinner" aria-hidden="true"></div>
                         <p>Generating your message...</p>
                     </div>
                     <div id="result-content" class="result-content"></div>
@@ -620,6 +626,10 @@ class MessageGeneratorUI {
         };
     }
 
+    /**
+     * Export all data (history and analytics) as JSON
+     * @returns {Object} Export data object
+     */
     exportData() {
         return {
             exportedAt: new Date().toISOString(),
@@ -627,6 +637,73 @@ class MessageGeneratorUI {
             analytics: this.calculateAnalytics(),
             version: '1.0.0'
         };
+    }
+
+    /**
+     * Export templates in various formats (JSON, CSV, TXT)
+     * @param {string} format - Export format ('json', 'csv', 'txt')
+     */
+    exportTemplates(format = 'json') {
+        const categories = this.core.getCategories();
+        let content = '';
+        let filename = `message-templates-${new Date().toISOString().split('T')[0]}`;
+        let mimeType = 'text/plain';
+
+        if (format === 'json') {
+            const templates = {};
+            categories.forEach(cat => {
+                const categoryTemplates = this.core.templates[cat];
+                if (categoryTemplates) {
+                    templates[cat] = categoryTemplates.map(t => ({
+                        message: t.template,
+                        placeholders: t.placeholders,
+                        confidence: t.confidence
+                    }));
+                }
+            });
+            content = JSON.stringify(templates, null, 2);
+            filename += '.json';
+            mimeType = 'application/json';
+        } else if (format === 'csv') {
+            content = 'Category,Message,Placeholders,Confidence\n';
+            categories.forEach(cat => {
+                const categoryTemplates = this.core.templates[cat];
+                if (categoryTemplates) {
+                    categoryTemplates.forEach(t => {
+                        const message = t.template.replace(/"/g, '""'); // Escape quotes
+                        const placeholders = t.placeholders.join(';');
+                        content += `"${cat}","${message}","${placeholders}",${t.confidence}\n`;
+                    });
+                }
+            });
+            filename += '.csv';
+            mimeType = 'text/csv';
+        } else if (format === 'txt') {
+            categories.forEach(cat => {
+                content += `\n=== ${cat.toUpperCase()} ===\n\n`;
+                const categoryTemplates = this.core.templates[cat];
+                if (categoryTemplates) {
+                    categoryTemplates.forEach((t, idx) => {
+                        content += `${idx + 1}. ${t.template}\n`;
+                        content += `   Placeholders: ${t.placeholders.join(', ')}\n`;
+                        content += `   Confidence: ${(t.confidence * 100).toFixed(0)}%\n\n`;
+                    });
+                }
+            });
+            filename += '.txt';
+        }
+
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.showSuccess(`Templates exported as ${format.toUpperCase()}!`);
     }
 
     setupAutoSave() {

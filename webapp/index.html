@@ -142,6 +142,18 @@
                             📤 Export All Data
                         </button>
                     </div>
+                    <div class="setting-item">
+                        <p style="margin: 10px 0 5px 0; font-size: 14px; color: var(--text-secondary);">Export Templates:</p>
+                        <button id="exportTemplatesJsonBtn" class="btn btn-outline" style="margin-right: 8px;">
+                            JSON
+                        </button>
+                        <button id="exportTemplatesCsvBtn" class="btn btn-outline" style="margin-right: 8px;">
+                            CSV
+                        </button>
+                        <button id="exportTemplatesTxtBtn" class="btn btn-outline">
+                            TXT
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -301,6 +313,33 @@
             }
             if (exportDataBtn) {
                 exportDataBtn.addEventListener('click', exportAllData);
+            }
+            
+            // Template export buttons
+            const exportTemplatesJsonBtn = document.getElementById('exportTemplatesJsonBtn');
+            const exportTemplatesCsvBtn = document.getElementById('exportTemplatesCsvBtn');
+            const exportTemplatesTxtBtn = document.getElementById('exportTemplatesTxtBtn');
+            
+            if (exportTemplatesJsonBtn) {
+                exportTemplatesJsonBtn.addEventListener('click', () => {
+                    if (app.generator) {
+                        app.generator.exportTemplates('json');
+                    }
+                });
+            }
+            if (exportTemplatesCsvBtn) {
+                exportTemplatesCsvBtn.addEventListener('click', () => {
+                    if (app.generator) {
+                        app.generator.exportTemplates('csv');
+                    }
+                });
+            }
+            if (exportTemplatesTxtBtn) {
+                exportTemplatesTxtBtn.addEventListener('click', () => {
+                    if (app.generator) {
+                        app.generator.exportTemplates('txt');
+                    }
+                });
             }
             
             // Load settings into form

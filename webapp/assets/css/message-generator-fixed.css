@@ -500,6 +500,7 @@ body {
     border: 2px solid var(--border-color);
     border-radius: var(--radius-full);
     font-size: var(--font-size-sm);
+    font-family: inherit;
     cursor: pointer;
     transition: var(--transition-normal);
     color: var(--text-secondary);
@@ -520,20 +521,22 @@ body {
     transition: var(--transition-normal);
 }
 
-.prompt-tag:hover::before {
+.prompt-tag:hover::before,
+.prompt-tag:focus::before {
     opacity: 1;
 }
 
-.prompt-tag:hover {
+.prompt-tag:hover,
+.prompt-tag:focus {
     color: var(--text-inverse);
     border-color: transparent;
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+    outline: none;
 }
 
-.prompt-tag span {
-    position: relative;
-    z-index: 1;
+.prompt-tag:focus {
+    box-shadow: var(--shadow-md), 0 0 0 3px rgba(99, 102, 241, 0.3);
 }
 
 /* Enhanced Result Section */
