@@ -1,5 +1,26 @@
+/**
+ * MessageGeneratorCore - Core message generation logic and template management
+ * 
+ * This class handles all business logic for the AI Message Generator including:
+ * - Template storage and retrieval
+ * - Category detection from user prompts
+ * - Template selection based on confidence scores
+ * - Message customization with placeholder replacement
+ * - Message validation and suggestions
+ * 
+ * @class
+ */
 class MessageGeneratorCore {
+    /**
+     * Initialize the message generator with templates and keyword mappings
+     * @constructor
+     */
     constructor() {
+        /**
+         * Template database organized by category
+         * Each template contains: template text, placeholders, category, and confidence score
+         * @type {Object.<string, Array.<{template: string, placeholders: string[], category: string, confidence: number}>>}
+         */
         this.templates = {
             diwali: [
                 {
@@ -121,6 +142,11 @@ class MessageGeneratorCore {
             ]
         };
 
+        /**
+         * Keyword mappings for category detection
+         * Maps each category to an array of keywords used to identify the category from user prompts
+         * @type {Object.<string, string[]>}
+         */
         this.keywordMap = {
             diwali: ["diwali", "deepavali", "festival of lights", "hindu festival", "lamp", "celebration"],
             christmas: ["christmas", "xmas", "holiday", "santa", "festive", "december"],
@@ -133,6 +159,20 @@ class MessageGeneratorCore {
         };
     }
 
+    /**
+     * Generate a message from a natural language prompt
+     * 
+     * Main entry point for message generation. Analyzes the prompt, selects appropriate
+     * template, and returns a structured message object with alternatives and suggestions.
+     * 
+     * @param {string} prompt - User's natural language description of desired message
+     * @returns {{message: string, category: string, placeholders: string[], confidence: number, alternatives: string[], suggestions: string[], error?: string}}
+     * @throws {Error} If prompt is invalid (caught and returned in result)
+     * 
+     * @example
+     * const result = core.generateMessage("Send Diwali wishes to customers");
+     * // Returns: { message: "Hello {name}, ...", category: "diwali", ... }
+     */
     generateMessage(prompt) {
         try {
             if (!prompt || typeof prompt !== 'string') {
@@ -169,6 +209,16 @@ class MessageGeneratorCore {
         }
     }
 
+    /**
+     * Detect message category from user prompt using keyword matching
+     * 
+     * Analyzes the prompt text and scores each category based on keyword matches.
+     * Longer keywords receive higher weights to prioritize more specific matches.
+     * 
+     * @param {string} prompt - Normalized (lowercase, trimmed) user prompt
+     * @returns {string} Best matching category name (defaults to 'business' if no matches)
+     * @private
+     */
     detectCategory(prompt) {
         let bestCategory = 'business';
         let highestScore = 0;
@@ -190,6 +240,17 @@ class MessageGeneratorCore {
         return bestCategory;
     }
 
+    /**
+     * Select the best matching template from a category
+     * 
+     * Currently selects template with highest confidence score.
+     * Future enhancement: Implement more sophisticated matching based on prompt content.
+     * 
+     * @param {string} category - Message category to search in
+     * @param {string} prompt - User prompt (for future enhanced matching)
+     * @returns {Object|null} Best matching template object, or null if no templates found
+     * @private
+     */
     selectBestTemplate(category, prompt) {
         const templates = this.templates[category];
         if (!templates || templates.length === 0) {
@@ -203,6 +264,13 @@ class MessageGeneratorCore {
         );
     }
 
+    /**
+     * Generate a generic fallback message when no specific template matches
+     * 
+     * @param {string} prompt - Original user prompt (not currently used but available for future enhancement)
+     * @returns {{message: string, category: string, placeholders: string[], confidence: number, alternatives: string[], suggestions: string[]}}
+     * @private
+     */
     generateGenericMessage(prompt) {
         return {
             message: "Hello {name}, Thank you for reaching out. We appreciate your interest and will get back to you soon. Best regards, {company}",
@@ -220,6 +288,14 @@ class MessageGeneratorCore {
         };
     }
 
+    /**
+     * Get alternative message templates from the same category
+     * 
+     * @param {string} category - Message category
+     * @param {Object} selectedTemplate - Currently selected template to exclude
+     * @returns {string[]} Array of up to 3 alternative message templates
+     * @private
+     */
     getAlternatives(category, selectedTemplate) {
         const templates = this.templates[category] || [];
         return templates
@@ -244,6 +320,17 @@ class MessageGeneratorCore {
         return suggestions;
     }
 
+    /**
+     * Customize a message template by replacing placeholders with actual values
+     * 
+     * @param {string} message - Message template with {placeholder} syntax
+     * @param {Object.<string, string>} values - Key-value pairs for placeholder replacement
+     * @returns {string} Customized message with placeholders replaced
+     * 
+     * @example
+     * customizeMessage("Hello {name}!", {name: "John"})
+     * // Returns: "Hello John!"
+     */
     customizeMessage(message, values) {
         try {
             if (!message || typeof message !== 'string') {
@@ -270,6 +357,16 @@ class MessageGeneratorCore {
         }
     }
 
+    /**
+     * Extract placeholder names from a message template
+     * 
+     * @param {string} message - Message template with {placeholder} syntax
+     * @returns {string[]} Array of placeholder names (without braces)
+     * 
+     * @example
+     * extractPlaceholders("Hello {name}, welcome to {company}!")
+     * // Returns: ["name", "company"]
+     */
     extractPlaceholders(message) {
         if (!message || typeof message !== 'string') {
             return [];
@@ -281,6 +378,12 @@ class MessageGeneratorCore {
         return matches.map(match => match.slice(1, -1));
     }
 
+    /**
+     * Validate a message and provide warnings/errors
+     * 
+     * @param {string} message - Message to validate
+     * @returns {{isValid: boolean, errors: string[], warnings: string[]}} Validation result
+     */
     validateMessage(message) {
         const result = {
             isValid: true,

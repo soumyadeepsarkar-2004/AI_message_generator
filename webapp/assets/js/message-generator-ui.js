@@ -65,7 +65,12 @@ class MessageGeneratorUI {
                                 id="user-prompt" 
                                 placeholder="e.g., I want to send Diwali wishes to my customers"
                                 rows="3"
+                                maxlength="500"
+                                aria-label="Message description"
                             ></textarea>
+                            <div class="char-counter">
+                                <span id="char-count">0</span> / 500 characters
+                            </div>
                         </div>
                     </div>
                     
@@ -141,6 +146,10 @@ class MessageGeneratorUI {
         `;
     }
 
+    /**
+     * Bind event listeners to UI elements
+     * Sets up all interactive functionality including buttons, keyboard shortcuts, and input handlers
+     */
     bindEvents() {
         document.getElementById('generate-btn').addEventListener('click', () => {
             this.generateMessage();
@@ -151,30 +160,77 @@ class MessageGeneratorUI {
         document.getElementById('settings-btn').addEventListener('click', () => {
             this.showSettings();
         });
-        document.getElementById('user-prompt').addEventListener('keydown', (e) => {
+        
+        const promptInput = document.getElementById('user-prompt');
+        const charCount = document.getElementById('char-count');
+        
+        // Character counter
+        promptInput.addEventListener('input', () => {
+            const length = promptInput.value.length;
+            charCount.textContent = length;
+            
+            // Visual feedback for character limit
+            if (length > 450) {
+                charCount.style.color = '#ef4444'; // Red warning
+            } else if (length > 400) {
+                charCount.style.color = '#f59e0b'; // Orange warning
+            } else {
+                charCount.style.color = ''; // Default
+            }
+        });
+        
+        // Keyboard shortcut: Ctrl+Enter to generate
+        promptInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
                 this.generateMessage();
             }
         });
+        
+        // Quick prompt tags
         document.querySelectorAll('.prompt-tag').forEach(tag => {
             tag.addEventListener('click', () => {
                 const prompt = tag.getAttribute('data-prompt');
-                document.getElementById('user-prompt').value = prompt;
+                promptInput.value = prompt;
+                // Update character count
+                charCount.textContent = prompt.length;
                 this.generateMessage();
             });
         });
+        
+        // Night mode toggle
         document.getElementById('nightModeToggle').addEventListener('click', () => {
             document.body.classList.toggle('night-mode');
             this.container.classList.toggle('night-mode');
+            const button = document.getElementById('nightModeToggle');
+            button.textContent = document.body.classList.contains('night-mode') ? '☀️ Day Mode' : '🌙 Night Mode';
         });
     }
 
+    /**
+     * Generate a message from user input with enhanced validation
+     * Validates input, generates message, displays results, and updates history
+     * @async
+     */
     async generateMessage() {
         const promptInput = document.getElementById('user-prompt');
         const prompt = promptInput.value.trim();
 
+        // Enhanced input validation
         if (!prompt) {
             this.showError('Please enter a message description');
+            promptInput.focus();
+            return;
+        }
+
+        if (prompt.length < 5) {
+            this.showError('Please enter a more detailed description (at least 5 characters)');
+            promptInput.focus();
+            return;
+        }
+
+        if (prompt.length > 500) {
+            this.showError('Description is too long. Please keep it under 500 characters');
             return;
         }
 
@@ -185,6 +241,12 @@ class MessageGeneratorUI {
             await this.delay(1000);
             
             const result = this.core.generateMessage(prompt);
+            
+            // Check for generation errors
+            if (result.error) {
+                this.showError('Generation issue: ' + result.error);
+            }
+            
             this.state.currentMessage = result;
             
             this.displayResult(result, prompt);
@@ -192,6 +254,7 @@ class MessageGeneratorUI {
             this.updateAnalytics();
             
         } catch (error) {
+            console.error('Error in generateMessage:', error);
             this.showError('Failed to generate message: ' + error.message);
         } finally {
             this.showLoading(false);
